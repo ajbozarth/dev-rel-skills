@@ -36,6 +36,14 @@ Writes high-engagement tweets or threads about technical content. Classifies the
 /write-tweet [topic, PR number, path/to/post.md, or "thread about X"]
 ```
 
+### `/de-llmify`
+
+Edits a piece of writing to remove patterns commonly associated with LLM-generated text — hollow openers, filler transitions, over-explained structure, hedge stacking, and corporate-speak. Based on Kobak et al. 2024 research and developer community observations. Pass a file path or inline text.
+
+```
+/de-llmify [path/to/file.md or inline text]
+```
+
 ## Workflow
 
 A typical dev-rel workflow using these skills:
@@ -43,3 +51,4 @@ A typical dev-rel workflow using these skills:
 1. **Find candidates** — run `/get-blog-candidates` to see what merged recently and what's worth writing about
 2. **Draft content** — use `/release-blog` for release summaries or `/write-technical-blog` for deep dives on a single feature
 3. **Promote** — run `/write-tweet` on the resulting blog post file to generate a thread that drives readers to it
+4. **Polish** — run `/de-llmify` on any generated content to remove AI writing tells before publishing

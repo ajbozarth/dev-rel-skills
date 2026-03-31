@@ -14,6 +14,7 @@ Each skill lives in `.claude/skills/<skill-name>/SKILL.md`. Skills are designed 
 2. `/release-blog` — Drafts a full release post from the latest GitHub release, scoring PRs into Highlight (≥50), Mention (10–49), and Skip (<10) tiers
 3. `/write-technical-blog` — Deep-dive post guide drawing on best practices from Stripe, GitHub, Cloudflare, HashiCorp, and Google engineering blogs
 4. `/write-tweet` — Generates tweet threads with proven opening formulas and per-announcement-type content rules
+5. `/de-llmify` — Edits writing to remove LLM-generated text patterns before publishing
 
 Skills can be used independently but typically flow sequentially: discover → draft → promote.
 
