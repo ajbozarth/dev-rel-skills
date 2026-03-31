@@ -25,6 +25,40 @@ framework below.
 
 ---
 
+## Working from Source Material
+
+If given a file path as input, extract text from it before proceeding:
+
+- **PDF**: use the Read tool directly — Claude can read PDFs natively.
+- **PowerPoint (.pptx)**: convert to markdown with pandoc, then read the result:
+  ```bash
+  pandoc path/to/file.pptx -o /tmp/slides.md
+  ```
+  Then use the Read tool on `/tmp/slides.md`. To work with a specific slide
+  range, grep for the slide headings or read the relevant line range.
+  If pandoc is not available, fall back to `python-pptx`:
+  ```bash
+  python3 - <<'EOF'
+  from pptx import Presentation
+  prs = Presentation("path/to/file.pptx")
+  for i, slide in enumerate(prs.slides, start=1):
+      texts = []
+      for shape in slide.shapes:
+          if shape.has_text_frame:
+              for para in shape.text_frame.paragraphs:
+                  line = " ".join(run.text for run in para.runs).strip()
+                  if line:
+                      texts.append(line)
+      print(f"\n--- Slide {i} ---")
+      print("\n".join(texts) if texts else "(no text)")
+  EOF
+  ```
+- **Other formats**: ask the user to export to PDF or paste the text.
+
+Once text is extracted, proceed with the steps below.
+
+---
+
 ## Step 1: Identify the Post Type
 
 Before writing anything, determine which type of post this is:
