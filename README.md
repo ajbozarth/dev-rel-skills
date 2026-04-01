@@ -44,6 +44,24 @@ Edits a piece of writing to remove patterns commonly associated with LLM-generat
 /de-llmify [path/to/file.md or inline text]
 ```
 
+## Setup
+
+Add this repo path to `permissions.additionalDirectories` in `~/.claude/settings.json`:
+
+```json
+"permissions": {
+  "additionalDirectories": [
+    "/path/to/dev-rel-skills"
+  ]
+}
+```
+
+Claude Code will automatically discover and load all skills from `.claude/skills/` in this repo, alongside any existing skills you already have configured.
+
+**What gets loaded:** skills only. Hooks, subagents, and commands in `.claude/` are ignored. CLAUDE.md/rules are also ignored unless `CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1` is set.
+
+See the [Claude Code permissions docs](https://code.claude.com/docs/en/permissions#working-directories) and [skills docs](https://code.claude.com/docs/en/skills#skills-from-additional-directories) for more detail.
+
 ## Workflow
 
 A typical dev-rel workflow using these skills:
