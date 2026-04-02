@@ -36,6 +36,14 @@ Writes high-engagement tweets or threads about technical content. Classifies the
 /write-tweet [topic, PR number, path/to/post.md, or "thread about X"]
 ```
 
+### `/validate-snippets`
+
+Extracts every fenced code block from a markdown file, executes each one, and reports which pass, fail, or were skipped. Supports Python, Go, JavaScript, TypeScript, and shell. Non-code blocks (JSON, YAML, output, etc.) are automatically skipped. Writes a detailed report and offers to fix failing snippets in place.
+
+```
+/validate-snippets <path/to/file.md>
+```
+
 ### `/de-llmify`
 
 Edits a piece of writing to remove patterns commonly associated with LLM-generated text — hollow openers, filler transitions, over-explained structure, hedge stacking, and corporate-speak. Based on Kobak et al. 2024 research and developer community observations. Pass a file path or inline text.
@@ -68,5 +76,6 @@ A typical dev-rel workflow using these skills:
 
 1. **Find candidates** — run `/get-blog-candidates` to see what merged recently and what's worth writing about
 2. **Draft content** — use `/release-blog` for release summaries or `/write-technical-blog` for deep dives on a single feature
-3. **Promote** — run `/write-tweet` on the resulting blog post file to generate a thread that drives readers to it
-4. **Polish** — run `/de-llmify` on any generated content to remove AI writing tells before publishing
+3. **Validate** — run `/validate-snippets` on the draft to make sure all code examples actually work
+4. **Promote** — run `/write-tweet` on the resulting blog post file to generate a thread that drives readers to it
+5. **Polish** — run `/de-llmify` on any generated content to remove AI writing tells before publishing

@@ -10,24 +10,28 @@ A collection of Claude Code agent skills for developer relations work. Skills ar
 
 Each skill lives in `.claude/skills/<skill-name>/SKILL.md`. Skills are designed to work as a pipeline:
 
-1. `/get-blog-candidates` — Fetches merged PRs from `generative-computing/mellea`, scores each by blog potential, and outputs a ranked table
-2. `/release-blog` — Drafts a full release post from the latest GitHub release, scoring PRs into Highlight (≥50), Mention (10–49), and Skip (<10) tiers
-3. `/write-technical-blog` — Deep-dive post guide drawing on best practices from Stripe, GitHub, Cloudflare, HashiCorp, and Google engineering blogs
-4. `/write-tweet` — Generates tweet threads with proven opening formulas and per-announcement-type content rules
-5. `/de-llmify` — Edits writing to remove LLM-generated text patterns before publishing
+1. `/hn-scout` — Scans Hacker News front page for AI-related posts, scores each for mellea integration potential, and generates concrete demo ideas
+2. `/get-blog-candidates` — Fetches merged PRs from `generative-computing/mellea`, scores each by blog potential, and outputs a ranked table
+3. `/release-blog` — Drafts a full release post from the latest GitHub release, scoring PRs into Highlight (≥50), Mention (10–49), and Skip (<10) tiers
+4. `/write-technical-blog` — Deep-dive post guide drawing on best practices from Stripe, GitHub, Cloudflare, HashiCorp, and Google engineering blogs
+5. `/write-tweet` — Generates tweet threads with proven opening formulas and per-announcement-type content rules
+6. `/de-llmify` — Edits writing to remove LLM-generated text patterns before publishing
+7. `/validate-snippets` — Extracts fenced code blocks from writing, executes each, and reports pass/fail/skip results
 
-Skills can be used independently but typically flow sequentially: discover → draft → promote.
+Skills can be used independently but typically flow sequentially: scout → discover → draft → validate → promote.
 
 ## External Dependency
 
-All skills that fetch GitHub data rely on the `gh` CLI being installed and authenticated. Skills use `gh pr list`, `gh pr view`, `gh release view`, and `gh api`.
+All skills that fetch GitHub data rely on the `gh` CLI being installed and authenticated. Skills use `gh pr list`, `gh pr view`, `gh release view`, and `gh api`. The `/hn-scout` skill uses the public Hacker News Firebase API (`hacker-news.firebaseio.com`) and WebFetch for reading linked articles.
 
 ## Output Files
 
 Skills write their output to the working directory:
+- HN scout reports → `hn-scout-YYYY-MM-DD.md`
 - Release blog posts → `blog-release-vX.Y.Z.md`
 - Feature blog posts → `blog-<slug>.md`
 - Tweet threads → `tweet-<slug>.md`
+- Snippet validation reports → `snippet-report-<slug>.md`
 
 See `demos/` for real examples of each output type.
 
