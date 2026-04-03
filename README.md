@@ -4,6 +4,14 @@ A collection of Claude Code agent skills for developer relations work. These ski
 
 ## Skills
 
+### `/hn-scout`
+
+Scans the Hacker News front page for AI-related posts and evaluates each for integration or demo potential with a target project. Scores posts on two axes — fit (how naturally the project applies) and buzz (how much visibility it could get) — then generates concrete demo ideas for top-scoring opportunities. Writes output to `hn-scout-YYYY-MM-DD.md`.
+
+```
+/hn-scout [--top N]
+```
+
 ### `/get-blog-candidates`
 
 Fetches merged PRs from a GitHub repo and ranks them by blog/demo potential. Scores each PR on signals like `feat:` prefix, lines changed, and whether it touched `docs/examples/`. Outputs a ranked table with a "Top picks" callout so you can quickly decide what to write about next.
@@ -74,8 +82,9 @@ See the [Claude Code permissions docs](https://code.claude.com/docs/en/permissio
 
 A typical dev-rel workflow using these skills:
 
-1. **Find candidates** — run `/get-blog-candidates` to see what merged recently and what's worth writing about
-2. **Draft content** — use `/release-blog` for release summaries or `/write-technical-blog` for deep dives on a single feature
-3. **Validate** — run `/validate-snippets` on the draft to make sure all code examples actually work
-4. **Promote** — run `/write-tweet` on the resulting blog post file to generate a thread that drives readers to it
+1. **Scout trends** — run `/hn-scout` to find trending AI topics where your project has a natural angle
+2. **Find candidates** — run `/get-blog-candidates` to see what merged recently and what's worth writing about
+3. **Draft content** — use `/release-blog` for release summaries or `/write-technical-blog` for deep dives on a single feature
+4. **Validate** — run `/validate-snippets` on the draft to make sure all code examples actually work
 5. **Polish** — run `/de-llmify` on any generated content to remove AI writing tells before publishing
+6. **Promote** — run `/write-tweet` on the resulting blog post file to generate a thread that drives readers to it
