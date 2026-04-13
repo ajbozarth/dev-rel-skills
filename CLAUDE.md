@@ -4,11 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Repo Is
 
-A collection of Claude Code agent skills for developer relations work. Skills are defined as SKILL.md files under `.claude/skills/` and are invoked via `/skill-name` commands. There is no build system, test suite, or runtime — the "application" is the prompt instructions themselves.
+A collection of Claude Code agent skills for developer relations work. Skills are defined as SKILL.md files under `skills/` and are installed via `./install-skills.sh`, which symlinks them into `~/.claude/skills/`. There is no build system, test suite, or runtime — the "application" is the prompt instructions themselves.
 
 ## Skill Architecture
 
-Each skill lives in `.claude/skills/<skill-name>/SKILL.md`. Skills are designed to work as a pipeline:
+Each skill lives in `skills/<skill-name>/SKILL.md`. Skills are designed to work as a pipeline:
 
 1. `/hn-scout` — Scans Hacker News front page for AI-related posts, scores each for mellea integration potential, and generates concrete demo ideas
 2. `/get-blog-candidates` — Fetches merged PRs from `generative-computing/mellea`, scores each by blog potential, and outputs a ranked table
