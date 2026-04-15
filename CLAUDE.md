@@ -10,16 +10,17 @@ A collection of Claude Code agent skills for developer relations work. Skills ar
 
 Each skill lives in `skills/<skill-name>/SKILL.md`. Skills are designed to work as a pipeline:
 
-1. `/hn-scout` — Scans Hacker News front page for AI-related posts, scores each for mellea integration potential, and generates concrete demo ideas. **Project-specific to mellea.** For any other project, use `/hn-scout-generic`.
-2. `/hn-scout-generic` — Same as `/hn-scout`, but infers the target project's capabilities from its README at runtime, so it works for any repo.
-3. `/get-blog-candidates` — Fetches merged PRs from the current repo, scores each by blog potential, and outputs a ranked table.
-4. `/release-blog` — Drafts a full release post from the latest GitHub release, scoring PRs into Highlight (≥50), Mention (10–49), and Skip (<10) tiers.
-5. `/write-technical-blog` — Deep-dive post guide drawing on best practices from Stripe, GitHub, Cloudflare, HashiCorp, and Google engineering blogs.
-6. `/write-tweet` — Generates tweet threads with proven opening formulas and per-announcement-type content rules.
-7. `/de-llmify` — Edits writing to remove LLM-generated text patterns before publishing.
-8. `/validate-snippets` — Extracts fenced code blocks from writing, executes each, and reports pass/fail/skip results.
+1a. `/hn-scout` — Scans Hacker News front page for AI-related posts, scores each for mellea integration potential, and generates concrete demo ideas
+1b. `/hn-scout-generic` — Same as `/hn-scout`, but infers the target project's capabilities from its README at runtime, so it works for any repo.
+2. `/get-blog-candidates` — Fetches merged PRs from `generative-computing/mellea`, scores each by blog potential, and outputs a ranked table
+3. `/release-blog` — Drafts a full release post from the latest GitHub release, scoring PRs into Highlight (≥50), Mention (10–49), and Skip (<10) tiers
+4. `/write-technical-blog` — Deep-dive post guide drawing on best practices from Stripe, GitHub, Cloudflare, HashiCorp, and Google engineering blogs
+5. `/write-tweet` — Generates tweet threads with proven opening formulas and per-announcement-type content rules
+6. `/de-llmify` — Edits writing to remove LLM-generated text patterns before publishing
+7. `/validate-snippets` — Extracts fenced code blocks from writing, executes each, and reports pass/fail/skip results
+8. `/link-preview` — Generates a link preview snippet (markdown card with code snippet, Open Graph tags, Twitter Card) for a finished post or external URL
 
-Skills can be used independently but typically flow sequentially: scout → discover → draft → validate → promote.
+Skills can be used independently but typically flow sequentially: scout → discover → draft → validate → preview → promote.
 
 ## Target Repo Resolution
 
@@ -45,6 +46,7 @@ Skills write their output to the working directory:
 - Feature blog posts → `blog-<slug>.md`
 - Tweet threads → `tweet-<slug>.md`
 - Snippet validation reports → `snippet-report-<slug>.md`
+- Link preview snippets → `link-preview-<slug>.md`
 
 See `demos/` for real examples of each output type.
 
