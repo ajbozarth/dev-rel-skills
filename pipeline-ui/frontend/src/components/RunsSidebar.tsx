@@ -1,24 +1,27 @@
 import { useState } from 'react';
-import type { PipelineRun } from '../types';
+import type { PipelineRun, PipelineType, PipelineTypeDef } from '../types';
 
 interface Props {
   runs: PipelineRun[];
   activeRunId: string | null;
+  pipelineTypes: PipelineTypeDef[];
   onSelectRun: (id: string) => void;
-  onCreateRun: (name: string, repo?: string) => void;
+  onCreateRun: (name: string, repo?: string, pipelineType?: PipelineType) => void;
   onDeleteRun: (id: string) => void;
 }
 
-export function RunsSidebar({ runs, activeRunId, onSelectRun, onCreateRun, onDeleteRun }: Props) {
+export function RunsSidebar({ runs, activeRunId, pipelineTypes, onSelectRun, onCreateRun, onDeleteRun }: Props) {
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState('');
   const [repo, setRepo] = useState('');
+  const [pipelineType, setPipelineType] = useState<PipelineType>('content');
 
   const handleCreate = () => {
     if (!name.trim()) return;
-    onCreateRun(name.trim(), repo.trim() || undefined);
+    onCreateRun(name.trim(), repo.trim() || undefined, pipelineType);
     setName('');
     setRepo('');
+    setPipelineType('content');
     setShowForm(false);
   };
 
@@ -44,6 +47,17 @@ export function RunsSidebar({ runs, activeRunId, onSelectRun, onCreateRun, onDel
             className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
             onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
           />
+          <select
+            value={pipelineType}
+            onChange={(e) => setPipelineType(e.target.value as PipelineType)}
+            className="w-full px-2 py-1 text-sm border border-gray-300 rounded bg-white"
+          >
+            {pipelineTypes.map((pt) => (
+              <option key={pt.name} value={pt.name}>
+                {pt.label}
+              </option>
+            ))}
+          </select>
           <input
             type="text"
             placeholder="owner/repo (optional)"
@@ -73,7 +87,14 @@ export function RunsSidebar({ runs, activeRunId, onSelectRun, onCreateRun, onDel
             <div className="min-w-0">
               <div className="text-sm font-medium text-gray-800 truncate">{run.name}</div>
               <div className="text-xs text-gray-400">
-                {run.current_stage ? `Stage: ${run.current_stage}` : 'New'}
+                <span className={`inline-block px-1 rounded text-[10px] font-medium mr-1 ${
+                  run.pipeline_type === 'release_blog'
+                    ? 'bg-purple-100 text-purple-600'
+                    : 'bg-gray-100 text-gray-500'
+                }`}>
+                  {pipelineTypes.find((pt) => pt.name === run.pipeline_type)?.label ?? run.pipeline_type}
+                </span>
+                {run.current_stage ? run.current_stage : 'New'}
               </div>
             </div>
             <button

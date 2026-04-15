@@ -1,18 +1,49 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { api } from '../api/client';
-import type { Artifact, PipelineRun, PipelineRunDetail, Stage, StageDefinition, StageExecution } from '../types';
+import type {
+  Artifact,
+  PipelineRun,
+  PipelineRunDetail,
+  PipelineType,
+  PipelineTypeDef,
+  Stage,
+  StageDefinition,
+  StageExecution,
+} from '../types';
 
 export function usePipeline() {
   const [runs, setRuns] = useState<PipelineRun[]>([]);
   const [activeRunId, setActiveRunId] = useState<string | null>(null);
   const [activeRun, setActiveRun] = useState<PipelineRunDetail | null>(null);
   const [registry, setRegistry] = useState<StageDefinition[]>([]);
+  const [pipelineTypes, setPipelineTypes] = useState<PipelineTypeDef[]>([]);
   const [selectedStage, setSelectedStage] = useState<Stage>('scout');
 
-  // Load registry once
+  // Derive stage order from the registry (no more hardcoded constant)
+  const stageOrder = useMemo<Stage[]>(
+    () => registry.map((s) => s.stage),
+    [registry],
+  );
+
+  // Load pipeline types once
   useEffect(() => {
-    api.getRegistry().then(setRegistry);
+    api.getPipelineTypes().then(setPipelineTypes);
   }, []);
+
+  // Load registry filtered by active run's pipeline type
+  useEffect(() => {
+    const pipelineType = activeRun?.pipeline_type;
+    api.getRegistry(pipelineType).then((reg) => {
+      setRegistry(reg);
+    });
+  }, [activeRun?.pipeline_type]);
+
+  // Reset selected stage to first in pipeline when registry changes
+  useEffect(() => {
+    if (stageOrder.length > 0 && !stageOrder.includes(selectedStage)) {
+      setSelectedStage(stageOrder[0]);
+    }
+  }, [stageOrder, selectedStage]);
 
   // Load runs on mount
   useEffect(() => {
@@ -28,11 +59,14 @@ export function usePipeline() {
     }
   }, [activeRunId]);
 
-  const createRun = useCallback(async (name: string, repo?: string) => {
-    const run = await api.createRun(name, repo);
-    setRuns((prev) => [run, ...prev]);
-    setActiveRunId(run.id);
-  }, []);
+  const createRun = useCallback(
+    async (name: string, repo?: string, pipelineType: PipelineType = 'content') => {
+      const run = await api.createRun(name, repo, pipelineType);
+      setRuns((prev) => [run, ...prev]);
+      setActiveRunId(run.id);
+    },
+    [],
+  );
 
   const refreshRun = useCallback(async () => {
     if (activeRunId) {
@@ -73,12 +107,24 @@ export function usePipeline() {
     [activeRun, registry],
   );
 
+  // Research status for release blog runs
+  const researchStatus = useMemo(() => {
+    if (!activeRun) return null;
+    const contextExecs = activeRun.executions.filter((e) => e.stage === 'context');
+    if (contextExecs.length === 0) return null;
+    const latest = contextExecs[contextExecs.length - 1];
+    return latest.status;
+  }, [activeRun]);
+
   return {
     runs,
     activeRunId,
     activeRun,
     registry,
+    stageOrder,
+    pipelineTypes,
     selectedStage,
+    researchStatus,
     setActiveRunId,
     createRun,
     refreshRun,

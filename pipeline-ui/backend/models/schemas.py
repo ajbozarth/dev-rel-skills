@@ -13,6 +13,12 @@ class StageEnum(str, Enum):
     polish = "polish"
     preview = "preview"
     promote = "promote"
+    context = "context"  # virtual stage for auto-research artifacts
+
+
+class PipelineTypeEnum(str, Enum):
+    content = "content"
+    release_blog = "release_blog"
 
 
 class ExecutionStatus(str, Enum):
@@ -59,15 +65,24 @@ class StageDefinition(BaseModel):
 class PipelineRunCreate(BaseModel):
     name: str
     repo_context: str | None = None
+    pipeline_type: PipelineTypeEnum = PipelineTypeEnum.content
 
 
 class PipelineRunResponse(BaseModel):
     id: str
     name: str
     repo_context: str | None
+    pipeline_type: str
     current_stage: str | None
     created_at: str
     updated_at: str
+
+
+class PipelineTypeDefResponse(BaseModel):
+    name: str
+    label: str
+    description: str
+    stages: list[str]
 
 
 class PipelineRunDetail(PipelineRunResponse):

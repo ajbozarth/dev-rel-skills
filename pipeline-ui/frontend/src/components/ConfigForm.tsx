@@ -18,13 +18,20 @@ export function ConfigForm({ skillVariant, inputArtifacts, onExecute, isRunning 
     return init;
   });
   const [artifactId, setArtifactId] = useState<string | null>(null);
+  const [manualFilename, setManualFilename] = useState<string>('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const params: Record<string, string | number | null> = {};
     for (const p of skillVariant.params) {
       const val = values[p.name];
-      if (p.type === 'artifact') continue; // handled via artifactId
+      if (p.type === 'artifact') {
+        // If no artifact selected but a manual filename was entered, pass it as the param
+        if (!artifactId && manualFilename) {
+          params[p.name] = manualFilename;
+        }
+        continue;
+      }
       if (!val && !p.required) continue;
       if (p.type === 'integer') {
         params[p.name] = val ? parseInt(val, 10) : null;
@@ -48,6 +55,7 @@ export function ConfigForm({ skillVariant, inputArtifacts, onExecute, isRunning 
               artifacts={inputArtifacts}
               selectedId={artifactId}
               onSelect={setArtifactId}
+              onManualFilename={setManualFilename}
             />
           ) : (
             <input

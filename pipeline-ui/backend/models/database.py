@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS pipeline_runs (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
     repo_context TEXT,
+    pipeline_type TEXT NOT NULL DEFAULT 'content',
     current_stage TEXT,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
@@ -52,6 +53,15 @@ async def init_db(db_path: Path) -> None:
     await _db.execute("PRAGMA journal_mode=WAL")
     await _db.execute("PRAGMA foreign_keys=ON")
     await _db.executescript(SCHEMA_SQL)
+
+    # Migration: add pipeline_type column if missing (for existing databases)
+    cursor = await _db.execute("PRAGMA table_info(pipeline_runs)")
+    columns = {row[1] for row in await cursor.fetchall()}
+    if "pipeline_type" not in columns:
+        await _db.execute(
+            "ALTER TABLE pipeline_runs ADD COLUMN pipeline_type TEXT NOT NULL DEFAULT 'content'"
+        )
+
     await _db.commit()
 
 

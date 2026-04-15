@@ -34,6 +34,7 @@ def _build_prompt(
     skill_name: str,
     params: dict,
     input_artifact_filename: str | None,
+    context_artifacts: list[dict] | None = None,
 ) -> str:
     skill_md = get_skill_content(skill_name)
 
@@ -59,6 +60,21 @@ Execute this skill now with these parameters: /{skill_name} {' '.join(param_part
 The input file from a previous stage is at: {filename}
 (It is already present in the working directory.)
 """
+
+    if context_artifacts:
+        prompt += "\n=== CONTEXT FROM PRIOR STAGES ===\n"
+        prompt += "The following outputs from earlier pipeline stages are provided as background context.\n"
+        prompt += "Use this information to inform your work — it contains research, analysis, and drafts from prior steps.\n\n"
+        for art in context_artifacts:
+            stage_label = art["stage"].replace("_", " ").title()
+            prompt += f"--- {stage_label}: {art['filename']} ---\n"
+            # Truncate very long artifacts to avoid blowing up context
+            content = art["content"]
+            if len(content) > 8000:
+                content = content[:8000] + "\n\n[... truncated ...]\n"
+            prompt += content
+            prompt += "\n\n"
+        prompt += "=== END CONTEXT ===\n"
 
     return prompt
 
@@ -90,11 +106,12 @@ async def run_execution(
     workspace_dir: str,
     input_artifact_filename: str | None,
     pre_execution_files: set[str],
+    context_artifacts: list[dict] | None = None,
 ) -> None:
     queue = asyncio.Queue()
     _streams[execution_id] = queue
 
-    prompt = _build_prompt(skill_name, params, input_artifact_filename)
+    prompt = _build_prompt(skill_name, params, input_artifact_filename, context_artifacts)
     total_cost: float | None = None
 
     try:

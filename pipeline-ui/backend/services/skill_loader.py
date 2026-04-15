@@ -7,6 +7,24 @@ _skill_content: dict[str, str] = {}
 # The complete registry
 _registry: list[StageDefinition] = []
 
+# Pipeline type definitions: which stages (and skill overrides) each type uses
+PIPELINE_TYPES: dict[str, dict] = {
+    "content": {
+        "label": "Content Pipeline",
+        "description": "Full content creation: scout, discover, draft, refine, promote",
+        "stages": ["scout", "discover", "draft", "validate", "polish", "preview", "promote"],
+        "skill_overrides": {},
+    },
+    "release_blog": {
+        "label": "Release Blog",
+        "description": "Draft and refine a release blog post from a specific release tag",
+        "stages": ["draft", "validate", "polish", "preview", "promote"],
+        "skill_overrides": {
+            "draft": ["release-blog"],
+        },
+    },
+}
+
 STAGE_SKILL_MAP: list[dict] = [
     {
         "stage": StageEnum.scout,
@@ -263,3 +281,77 @@ def get_skill_variant(stage: str, skill_name: str) -> SkillVariant | None:
                 if sv.skill_name == skill_name:
                     return sv
     return None
+
+
+def get_pipeline_type_defs() -> list[dict]:
+    """Return metadata for all available pipeline types."""
+    return [
+        {
+            "name": name,
+            "label": cfg["label"],
+            "description": cfg["description"],
+            "stages": cfg["stages"],
+        }
+        for name, cfg in PIPELINE_TYPES.items()
+    ]
+
+
+def get_registry_for_pipeline_type(pipeline_type: str) -> list[StageDefinition]:
+    """Return stage definitions filtered for a specific pipeline type.
+
+    Returns copies — never mutates the master _registry.
+    """
+    cfg = PIPELINE_TYPES.get(pipeline_type)
+    if not cfg:
+        return _registry  # fallback to full registry
+
+    stage_order = cfg["stages"]
+    overrides = cfg.get("skill_overrides", {})
+
+    # Build a lookup from the master registry
+    registry_by_stage = {sd.stage.value: sd for sd in _registry}
+
+    result = []
+    for stage_name in stage_order:
+        sd = registry_by_stage.get(stage_name)
+        if not sd:
+            continue
+
+        # Filter skills if there's an override for this stage
+        if stage_name in overrides:
+            allowed = overrides[stage_name]
+            filtered_skills = [s for s in sd.skills if s.skill_name in allowed]
+            # Also filter input_from_stages to only include stages in this pipeline
+            filtered_input = [s for s in sd.input_from_stages if s.value in stage_order]
+            sd = StageDefinition(
+                stage=sd.stage,
+                label=sd.label,
+                description=sd.description,
+                skills=filtered_skills,
+                accepts_input=sd.accepts_input,
+                input_from_stages=filtered_input,
+            )
+        else:
+            # Still need to filter input_from_stages
+            filtered_input = [s for s in sd.input_from_stages if s.value in stage_order]
+            if filtered_input != sd.input_from_stages:
+                sd = StageDefinition(
+                    stage=sd.stage,
+                    label=sd.label,
+                    description=sd.description,
+                    skills=sd.skills,
+                    accepts_input=sd.accepts_input,
+                    input_from_stages=filtered_input,
+                )
+
+        result.append(sd)
+
+    return result
+
+
+def get_stage_order_for_pipeline_type(pipeline_type: str) -> list[str]:
+    """Return the ordered stage list for a pipeline type."""
+    cfg = PIPELINE_TYPES.get(pipeline_type)
+    if not cfg:
+        return [sd.stage.value for sd in _registry]
+    return cfg["stages"]

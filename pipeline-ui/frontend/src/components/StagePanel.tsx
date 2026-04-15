@@ -7,11 +7,10 @@ import { MarkdownEditor } from './MarkdownEditor';
 import { MarkdownViewer } from './MarkdownViewer';
 import { StreamingOutput } from './StreamingOutput';
 
-const STAGE_ORDER: Stage[] = ['scout', 'discover', 'draft', 'validate', 'polish', 'preview', 'promote'];
-
 interface Props {
   run: PipelineRunDetail;
   stage: Stage;
+  stageOrder: Stage[];
   registry: StageDefinition[];
   onRefresh: () => void;
   onSelectStage: (stage: Stage) => void;
@@ -24,6 +23,7 @@ type OutputTab = 'log' | 'view' | 'edit';
 export function StagePanel({
   run,
   stage,
+  stageOrder,
   registry,
   onRefresh,
   onSelectStage,
@@ -100,16 +100,16 @@ export function StagePanel({
   );
 
   const handlePassToNext = useCallback(() => {
-    const idx = STAGE_ORDER.indexOf(stage);
-    if (idx < STAGE_ORDER.length - 1) {
-      onSelectStage(STAGE_ORDER[idx + 1]);
+    const idx = stageOrder.indexOf(stage);
+    if (idx < stageOrder.length - 1) {
+      onSelectStage(stageOrder[idx + 1]);
     }
-  }, [stage, onSelectStage]);
+  }, [stage, stageOrder, onSelectStage]);
 
   const skillVariant = stageDef?.skills.find((s) => s.skill_name === selectedSkill);
   const stageArtifacts = run.artifacts.filter((a) => a.stage === stage);
   const hasArtifacts = stageArtifacts.length > 0;
-  const nextStage = STAGE_ORDER[STAGE_ORDER.indexOf(stage) + 1];
+  const nextStage = stageOrder[stageOrder.indexOf(stage) + 1];
 
   if (!stageDef) {
     return <div className="p-4 text-gray-400">Stage not found in registry</div>;

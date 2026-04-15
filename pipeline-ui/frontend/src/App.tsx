@@ -11,6 +11,7 @@ export default function App() {
       <RunsSidebar
         runs={pipeline.runs}
         activeRunId={pipeline.activeRunId}
+        pipelineTypes={pipeline.pipelineTypes}
         onSelectRun={pipeline.setActiveRunId}
         onCreateRun={pipeline.createRun}
         onDeleteRun={pipeline.deleteRun}
@@ -21,13 +22,16 @@ export default function App() {
           <>
             <PipelineBar
               registry={pipeline.registry}
+              stageOrder={pipeline.stageOrder}
               selectedStage={pipeline.selectedStage}
               onSelectStage={pipeline.selectStage}
               executions={pipeline.activeRun.executions}
+              researchStatus={pipeline.researchStatus}
             />
             <StagePanel
               run={pipeline.activeRun}
               stage={pipeline.selectedStage}
+              stageOrder={pipeline.stageOrder}
               registry={pipeline.registry}
               onRefresh={pipeline.refreshRun}
               onSelectStage={pipeline.selectStage}

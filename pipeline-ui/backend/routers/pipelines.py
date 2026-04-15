@@ -1,3 +1,4 @@
+import json
 import shutil
 from datetime import datetime, timezone
 from uuid import uuid4
@@ -11,8 +12,12 @@ from backend.models.schemas import (
     PipelineRunCreate,
     PipelineRunDetail,
     PipelineRunResponse,
+    PipelineTypeEnum,
     StageExecutionResponse,
 )
+from backend.services.agent_runner import start_execution
+from backend.services.output_manager import snapshot_workspace
+from backend.services.skill_loader import get_skill_content
 
 router = APIRouter()
 
@@ -26,15 +31,54 @@ async def create_pipeline_run(body: PipelineRunCreate):
     workspace_dir.mkdir(parents=True, exist_ok=True)
 
     await db.execute(
-        "INSERT INTO pipeline_runs (id, name, repo_context, current_stage, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
-        (run_id, body.name, body.repo_context, None, now, now),
+        "INSERT INTO pipeline_runs (id, name, repo_context, pipeline_type, current_stage, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        (run_id, body.name, body.repo_context, body.pipeline_type.value, None, now, now),
     )
     await db.commit()
+
+    # Auto-trigger project research for release blog runs with a repo
+    if body.pipeline_type == PipelineTypeEnum.release_blog and body.repo_context:
+        try:
+            # Verify the skill exists (load_skills must have found it)
+            get_skill_content("research-project")
+
+            execution_id = str(uuid4())
+            await db.execute(
+                """INSERT INTO stage_executions
+                   (id, pipeline_run_id, stage, skill_name, status, params_json,
+                    input_artifact_id, started_at)
+                   VALUES (?, ?, ?, ?, 'running', ?, ?, ?)""",
+                (
+                    execution_id,
+                    run_id,
+                    "context",
+                    "research-project",
+                    json.dumps({"repo": body.repo_context}),
+                    None,
+                    now,
+                ),
+            )
+            await db.commit()
+
+            pre_files = snapshot_workspace(str(workspace_dir))
+            start_execution(
+                execution_id=execution_id,
+                pipeline_run_id=run_id,
+                stage="context",
+                skill_name="research-project",
+                params={"repo": body.repo_context},
+                workspace_dir=str(workspace_dir),
+                input_artifact_filename=None,
+                pre_execution_files=pre_files,
+            )
+        except KeyError:
+            pass  # research-project skill not installed, skip silently
 
     return PipelineRunResponse(
         id=run_id,
         name=body.name,
         repo_context=body.repo_context,
+        pipeline_type=body.pipeline_type.value,
         current_stage=None,
         created_at=now,
         updated_at=now,
@@ -53,6 +97,7 @@ async def list_pipeline_runs():
             id=r["id"],
             name=r["name"],
             repo_context=r["repo_context"],
+            pipeline_type=r["pipeline_type"],
             current_stage=r["current_stage"],
             created_at=r["created_at"],
             updated_at=r["updated_at"],
@@ -87,6 +132,7 @@ async def get_pipeline_run(run_id: str):
         id=run["id"],
         name=run["name"],
         repo_context=run["repo_context"],
+        pipeline_type=run["pipeline_type"],
         current_stage=run["current_stage"],
         created_at=run["created_at"],
         updated_at=run["updated_at"],

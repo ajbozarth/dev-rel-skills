@@ -2,12 +2,12 @@ import type { Stage, StageDefinition, StageExecution } from '../types';
 
 interface Props {
   registry: StageDefinition[];
+  stageOrder: Stage[];
   selectedStage: Stage;
   onSelectStage: (stage: Stage) => void;
   executions: StageExecution[];
+  researchStatus?: string | null;
 }
-
-const STAGE_ORDER: Stage[] = ['scout', 'discover', 'draft', 'validate', 'polish', 'preview', 'promote'];
 
 function getStageStatus(stage: Stage, executions: StageExecution[]): 'pending' | 'running' | 'completed' | 'failed' {
   const stageExecs = executions.filter((e) => e.stage === stage);
@@ -31,11 +31,25 @@ const statusColor: Record<string, string> = {
   failed: 'text-red-500 border-red-500',
 };
 
-export function PipelineBar({ registry, selectedStage, onSelectStage, executions }: Props) {
+export function PipelineBar({ registry, stageOrder, selectedStage, onSelectStage, executions, researchStatus }: Props) {
   return (
     <div className="bg-white border-b border-gray-200 px-4 py-3">
+      {researchStatus && (
+        <div className={`text-xs mb-2 flex items-center gap-1.5 ${
+          researchStatus === 'completed' ? 'text-green-600' :
+          researchStatus === 'running' ? 'text-blue-500' :
+          researchStatus === 'failed' ? 'text-red-500' : 'text-gray-400'
+        }`}>
+          {researchStatus === 'running' && <span className="animate-pulse">&#9679;</span>}
+          {researchStatus === 'completed' && <span>&#10003;</span>}
+          {researchStatus === 'failed' && <span>&#10007;</span>}
+          {researchStatus === 'running' ? 'Researching project...' :
+           researchStatus === 'completed' ? 'Project context ready' :
+           researchStatus === 'failed' ? 'Research failed' : ''}
+        </div>
+      )}
       <div className="flex items-center gap-1">
-        {STAGE_ORDER.map((stage, i) => {
+        {stageOrder.map((stage, i) => {
           const def = registry.find((s) => s.stage === stage);
           const status = getStageStatus(stage, executions);
           const isSelected = stage === selectedStage;

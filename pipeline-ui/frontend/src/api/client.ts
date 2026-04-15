@@ -2,6 +2,8 @@ import type {
   Artifact,
   PipelineRun,
   PipelineRunDetail,
+  PipelineType,
+  PipelineTypeDef,
   StageDefinition,
   StageExecution,
   StageExecuteRequest,
@@ -24,17 +26,21 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const api = {
   // Pipeline Runs
-  createRun: (name: string, repo_context?: string) =>
+  createRun: (name: string, repo_context?: string, pipeline_type: PipelineType = 'content') =>
     request<PipelineRun>('/pipelines', {
       method: 'POST',
-      body: JSON.stringify({ name, repo_context }),
+      body: JSON.stringify({ name, repo_context, pipeline_type }),
     }),
   listRuns: () => request<PipelineRun[]>('/pipelines'),
   getRun: (id: string) => request<PipelineRunDetail>(`/pipelines/${id}`),
   deleteRun: (id: string) => request<void>(`/pipelines/${id}`, { method: 'DELETE' }),
 
   // Stages
-  getRegistry: () => request<StageDefinition[]>('/stages/registry'),
+  getPipelineTypes: () => request<PipelineTypeDef[]>('/stages/pipeline-types'),
+  getRegistry: (pipelineType?: string) =>
+    request<StageDefinition[]>(
+      `/stages/registry${pipelineType ? `?pipeline_type=${pipelineType}` : ''}`,
+    ),
   executeStage: (body: StageExecuteRequest) =>
     request<StageExecution>('/stages/execute', {
       method: 'POST',

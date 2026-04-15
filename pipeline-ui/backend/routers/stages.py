@@ -9,13 +9,25 @@ from backend.models.database import get_db
 from backend.models.schemas import StageExecuteRequest, StageExecutionResponse
 from backend.services.agent_runner import cancel_execution, start_execution
 from backend.services.output_manager import snapshot_workspace
-from backend.services.skill_loader import get_registry
+from backend.services.skill_loader import (
+    get_pipeline_type_defs,
+    get_registry,
+    get_registry_for_pipeline_type,
+    get_stage_order_for_pipeline_type,
+)
 
 router = APIRouter()
 
 
+@router.get("/pipeline-types")
+async def get_pipeline_types():
+    return get_pipeline_type_defs()
+
+
 @router.get("/registry")
-async def get_stage_registry():
+async def get_stage_registry(pipeline_type: str | None = None):
+    if pipeline_type:
+        return get_registry_for_pipeline_type(pipeline_type)
     return get_registry()
 
 
@@ -74,6 +86,44 @@ async def execute_stage(body: StageExecuteRequest):
     # Snapshot workspace before execution
     pre_files = snapshot_workspace(workspace_dir)
 
+    # Gather context artifacts from prior stages in this pipeline
+    pipeline_type = run["pipeline_type"]
+    stage_order = get_stage_order_for_pipeline_type(pipeline_type)
+    current_idx = stage_order.index(body.stage.value) if body.stage.value in stage_order else 0
+    prior_stages = stage_order[:current_idx]
+    # Also include "context" stage (auto-research artifacts)
+    prior_stages_with_context = prior_stages + ["context"]
+
+    context_artifacts = []
+    if prior_stages_with_context:
+        placeholders = ",".join("?" for _ in prior_stages_with_context)
+        ctx_cursor = await db.execute(
+            f"""SELECT a.stage, a.filename, a.content, a.file_path, a.is_virtual
+                FROM artifacts a
+                JOIN stage_executions e ON a.execution_id = e.id
+                WHERE a.pipeline_run_id = ?
+                  AND a.stage IN ({placeholders})
+                  AND e.status = 'completed'
+                ORDER BY a.created_at""",
+            (body.pipeline_run_id, *prior_stages_with_context),
+        )
+        rows = await ctx_cursor.fetchall()
+        for row in rows:
+            content = row["content"]
+            # For file-backed artifacts without cached content, read from disk
+            if not content and row["file_path"]:
+                from pathlib import Path
+
+                fp = Path(row["file_path"])
+                if fp.exists():
+                    content = fp.read_text()
+            if content:
+                context_artifacts.append({
+                    "stage": row["stage"],
+                    "filename": row["filename"],
+                    "content": content,
+                })
+
     # Launch background task
     start_execution(
         execution_id=execution_id,
@@ -84,6 +134,7 @@ async def execute_stage(body: StageExecuteRequest):
         workspace_dir=workspace_dir,
         input_artifact_filename=input_artifact_filename,
         pre_execution_files=pre_files,
+        context_artifacts=context_artifacts,
     )
 
     return StageExecutionResponse(

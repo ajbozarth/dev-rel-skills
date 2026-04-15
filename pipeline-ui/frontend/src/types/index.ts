@@ -1,5 +1,13 @@
-export type Stage = 'scout' | 'discover' | 'draft' | 'validate' | 'polish' | 'preview' | 'promote';
+export type Stage = 'scout' | 'discover' | 'draft' | 'validate' | 'polish' | 'preview' | 'promote' | 'context';
 export type ExecutionStatus = 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
+export type PipelineType = 'content' | 'release_blog';
+
+export interface PipelineTypeDef {
+  name: PipelineType;
+  label: string;
+  description: string;
+  stages: string[];
+}
 
 export interface ParamDef {
   name: string;
@@ -32,6 +40,7 @@ export interface PipelineRun {
   id: string;
   name: string;
   repo_context: string | null;
+  pipeline_type: PipelineType;
   current_stage: string | null;
   created_at: string;
   updated_at: string;
