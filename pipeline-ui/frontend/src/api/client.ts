@@ -26,7 +26,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const api = {
   // Pipeline Runs
-  createRun: (name: string, repo_context?: string, pipeline_type: PipelineType = 'content') =>
+  createRun: (name: string, repo_context?: string, pipeline_type: PipelineType = 'feature_blog') =>
     request<PipelineRun>('/pipelines', {
       method: 'POST',
       body: JSON.stringify({ name, repo_context, pipeline_type }),

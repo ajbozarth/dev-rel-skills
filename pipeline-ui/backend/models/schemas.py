@@ -17,8 +17,9 @@ class StageEnum(str, Enum):
 
 
 class PipelineTypeEnum(str, Enum):
-    content = "content"
+    feature_blog = "feature_blog"
     release_blog = "release_blog"
+    topical_blog = "topical_blog"
 
 
 class ExecutionStatus(str, Enum):
@@ -65,7 +66,7 @@ class StageDefinition(BaseModel):
 class PipelineRunCreate(BaseModel):
     name: str
     repo_context: str | None = None
-    pipeline_type: PipelineTypeEnum = PipelineTypeEnum.content
+    pipeline_type: PipelineTypeEnum = PipelineTypeEnum.feature_blog
 
 
 class PipelineRunResponse(BaseModel):
@@ -88,6 +89,7 @@ class PipelineTypeDefResponse(BaseModel):
 class PipelineRunDetail(PipelineRunResponse):
     executions: list[StageExecutionResponse]
     artifacts: list[ArtifactResponse]
+    param_memory: dict[str, str | int | None] = {}
 
 
 # --- Stage Executions ---

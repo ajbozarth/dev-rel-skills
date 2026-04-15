@@ -9,11 +9,13 @@ _registry: list[StageDefinition] = []
 
 # Pipeline type definitions: which stages (and skill overrides) each type uses
 PIPELINE_TYPES: dict[str, dict] = {
-    "content": {
-        "label": "Content Pipeline",
-        "description": "Full content creation: scout, discover, draft, refine, promote",
-        "stages": ["scout", "discover", "draft", "validate", "polish", "preview", "promote"],
-        "skill_overrides": {},
+    "feature_blog": {
+        "label": "Feature Blog",
+        "description": "Blog about a feature discovered via PR review: discover, draft, refine, promote",
+        "stages": ["discover", "draft", "validate", "polish", "preview", "promote"],
+        "skill_overrides": {
+            "draft": ["write-technical-blog"],
+        },
     },
     "release_blog": {
         "label": "Release Blog",
@@ -21,6 +23,14 @@ PIPELINE_TYPES: dict[str, dict] = {
         "stages": ["draft", "validate", "polish", "preview", "promote"],
         "skill_overrides": {
             "draft": ["release-blog"],
+        },
+    },
+    "topical_blog": {
+        "label": "Topical Blog",
+        "description": "Blog about a trending topic: scout, draft, refine, promote",
+        "stages": ["scout", "draft", "validate", "polish", "preview", "promote"],
+        "skill_overrides": {
+            "draft": ["write-technical-blog"],
         },
     },
 }
@@ -160,7 +170,7 @@ STAGE_SKILL_MAP: list[dict] = [
         "label": "Polish",
         "description": "Remove LLM writing patterns",
         "accepts_input": True,
-        "input_from_stages": [StageEnum.draft, StageEnum.validate],
+        "input_from_stages": [StageEnum.draft],
         "skills": [
             {
                 "skill_name": "de-llmify",

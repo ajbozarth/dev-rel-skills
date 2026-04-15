@@ -146,10 +146,12 @@ export function StagePanel({
         <div className="bg-white rounded-lg border border-gray-200 p-4">
           <h3 className="text-sm font-medium text-gray-600 mb-3">Configuration</h3>
           <ConfigForm
+            key={`${stage}-${selectedSkill}`}
             skillVariant={skillVariant}
             inputArtifacts={inputArtifacts}
             onExecute={handleExecute}
             isRunning={isRunning || stream.status === 'streaming'}
+            carryForward={run.param_memory}
           />
         </div>
       )}

@@ -60,7 +60,7 @@ export function usePipeline() {
   }, [activeRunId]);
 
   const createRun = useCallback(
-    async (name: string, repo?: string, pipelineType: PipelineType = 'content') => {
+    async (name: string, repo?: string, pipelineType: PipelineType = 'feature_blog') => {
       const run = await api.createRun(name, repo, pipelineType);
       setRuns((prev) => [run, ...prev]);
       setActiveRunId(run.id);
@@ -107,7 +107,7 @@ export function usePipeline() {
     [activeRun, registry],
   );
 
-  // Research status for release blog runs
+  // Research status for runs with auto-triggered project research
   const researchStatus = useMemo(() => {
     if (!activeRun) return null;
     const contextExecs = activeRun.executions.filter((e) => e.stage === 'context');

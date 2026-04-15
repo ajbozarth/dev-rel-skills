@@ -7,9 +7,11 @@ interface Props {
   onSelect: (id: string) => void;
   /** Called when user types a filename manually (no artifact selected) */
   onManualFilename?: (filename: string) => void;
+  /** Called when user switches to manual filename entry */
+  onManualMode?: () => void;
 }
 
-export function ArtifactPicker({ artifacts, selectedId, onSelect, onManualFilename }: Props) {
+export function ArtifactPicker({ artifacts, selectedId, onSelect, onManualFilename, onManualMode }: Props) {
   const [manualMode, setManualMode] = useState(artifacts.length === 0);
   const [filename, setFilename] = useState('');
 
@@ -55,7 +57,7 @@ export function ArtifactPicker({ artifacts, selectedId, onSelect, onManualFilena
       </select>
       <button
         type="button"
-        onClick={() => setManualMode(true)}
+        onClick={() => { setManualMode(true); onManualMode?.(); }}
         className="text-xs text-blue-500 hover:underline"
       >
         Enter filename manually instead

@@ -1,6 +1,6 @@
 export type Stage = 'scout' | 'discover' | 'draft' | 'validate' | 'polish' | 'preview' | 'promote' | 'context';
 export type ExecutionStatus = 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
-export type PipelineType = 'content' | 'release_blog';
+export type PipelineType = 'feature_blog' | 'release_blog' | 'topical_blog';
 
 export interface PipelineTypeDef {
   name: PipelineType;
@@ -49,6 +49,7 @@ export interface PipelineRun {
 export interface PipelineRunDetail extends PipelineRun {
   executions: StageExecution[];
   artifacts: Artifact[];
+  param_memory: Record<string, string | number | null>;
 }
 
 export interface StageExecution {

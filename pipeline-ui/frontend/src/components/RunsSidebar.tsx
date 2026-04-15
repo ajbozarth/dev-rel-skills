@@ -14,14 +14,14 @@ export function RunsSidebar({ runs, activeRunId, pipelineTypes, onSelectRun, onC
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState('');
   const [repo, setRepo] = useState('');
-  const [pipelineType, setPipelineType] = useState<PipelineType>('content');
+  const [pipelineType, setPipelineType] = useState<PipelineType>('feature_blog');
 
   const handleCreate = () => {
     if (!name.trim()) return;
     onCreateRun(name.trim(), repo.trim() || undefined, pipelineType);
     setName('');
     setRepo('');
-    setPipelineType('content');
+    setPipelineType('feature_blog');
     setShowForm(false);
   };
 
@@ -90,7 +90,9 @@ export function RunsSidebar({ runs, activeRunId, pipelineTypes, onSelectRun, onC
                 <span className={`inline-block px-1 rounded text-[10px] font-medium mr-1 ${
                   run.pipeline_type === 'release_blog'
                     ? 'bg-purple-100 text-purple-600'
-                    : 'bg-gray-100 text-gray-500'
+                    : run.pipeline_type === 'topical_blog'
+                    ? 'bg-amber-100 text-amber-600'
+                    : 'bg-blue-100 text-blue-600'
                 }`}>
                   {pipelineTypes.find((pt) => pt.name === run.pipeline_type)?.label ?? run.pipeline_type}
                 </span>

@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS pipeline_runs (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
     repo_context TEXT,
-    pipeline_type TEXT NOT NULL DEFAULT 'content',
+    pipeline_type TEXT NOT NULL DEFAULT 'feature_blog',
     current_stage TEXT,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
@@ -59,8 +59,13 @@ async def init_db(db_path: Path) -> None:
     columns = {row[1] for row in await cursor.fetchall()}
     if "pipeline_type" not in columns:
         await _db.execute(
-            "ALTER TABLE pipeline_runs ADD COLUMN pipeline_type TEXT NOT NULL DEFAULT 'content'"
+            "ALTER TABLE pipeline_runs ADD COLUMN pipeline_type TEXT NOT NULL DEFAULT 'feature_blog'"
         )
+
+    # Migration: rename 'content' pipeline type to 'feature_blog'
+    await _db.execute(
+        "UPDATE pipeline_runs SET pipeline_type = 'feature_blog' WHERE pipeline_type = 'content'"
+    )
 
     await _db.commit()
 

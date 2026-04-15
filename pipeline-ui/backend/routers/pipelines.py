@@ -21,6 +21,12 @@ from backend.services.skill_loader import get_skill_content
 
 router = APIRouter()
 
+_AUTO_RESEARCH_TYPES = {
+    PipelineTypeEnum.release_blog,
+    PipelineTypeEnum.feature_blog,
+    PipelineTypeEnum.topical_blog,
+}
+
 
 @router.post("", response_model=PipelineRunResponse, status_code=201)
 async def create_pipeline_run(body: PipelineRunCreate):
@@ -36,8 +42,8 @@ async def create_pipeline_run(body: PipelineRunCreate):
     )
     await db.commit()
 
-    # Auto-trigger project research for release blog runs with a repo
-    if body.pipeline_type == PipelineTypeEnum.release_blog and body.repo_context:
+    # Auto-trigger project research for runs with a repo
+    if body.pipeline_type in _AUTO_RESEARCH_TYPES and body.repo_context:
         try:
             # Verify the skill exists (load_skills must have found it)
             get_skill_content("research-project")
@@ -128,6 +134,20 @@ async def get_pipeline_run(run_id: str):
     )
     artifacts = await art_cursor.fetchall()
 
+    # Build param memory: merge params from all completed executions
+    param_memory: dict[str, str | int | None] = {}
+    if run["repo_context"]:
+        param_memory["repo"] = run["repo_context"]
+    for e in executions:
+        if e["status"] == "completed" and e["params_json"]:
+            try:
+                params = json.loads(e["params_json"])
+                for k, v in params.items():
+                    if v is not None:
+                        param_memory[k] = v
+            except (json.JSONDecodeError, TypeError):
+                pass
+
     return PipelineRunDetail(
         id=run["id"],
         name=run["name"],
@@ -136,6 +156,7 @@ async def get_pipeline_run(run_id: str):
         current_stage=run["current_stage"],
         created_at=run["created_at"],
         updated_at=run["updated_at"],
+        param_memory=param_memory,
         executions=[
             StageExecutionResponse(
                 id=e["id"],

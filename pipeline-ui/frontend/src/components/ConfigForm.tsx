@@ -7,18 +7,27 @@ interface Props {
   inputArtifacts: Artifact[];
   onExecute: (params: Record<string, string | number | null>, inputArtifactId?: string) => void;
   isRunning: boolean;
+  carryForward?: Record<string, string | number | null>;
 }
 
-export function ConfigForm({ skillVariant, inputArtifacts, onExecute, isRunning }: Props) {
+export function ConfigForm({ skillVariant, inputArtifacts, onExecute, isRunning, carryForward }: Props) {
   const [values, setValues] = useState<Record<string, string>>(() => {
     const init: Record<string, string> = {};
     for (const p of skillVariant.params) {
-      if (p.default != null) init[p.name] = String(p.default);
+      const carried = carryForward?.[p.name];
+      if (carried != null) {
+        init[p.name] = String(carried);
+      } else if (p.default != null) {
+        init[p.name] = String(p.default);
+      }
     }
     return init;
   });
-  const [artifactId, setArtifactId] = useState<string | null>(null);
+  const [artifactId, setArtifactId] = useState<string | null>(
+    inputArtifacts.length > 0 ? inputArtifacts[inputArtifacts.length - 1].id : null,
+  );
   const [manualFilename, setManualFilename] = useState<string>('');
+  const [useManual, setUseManual] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,8 +35,8 @@ export function ConfigForm({ skillVariant, inputArtifacts, onExecute, isRunning 
     for (const p of skillVariant.params) {
       const val = values[p.name];
       if (p.type === 'artifact') {
-        // If no artifact selected but a manual filename was entered, pass it as the param
-        if (!artifactId && manualFilename) {
+        // If user switched to manual filename entry, pass it as the param
+        if (useManual && manualFilename) {
           params[p.name] = manualFilename;
         }
         continue;
@@ -39,7 +48,7 @@ export function ConfigForm({ skillVariant, inputArtifacts, onExecute, isRunning 
         params[p.name] = val || null;
       }
     }
-    onExecute(params, artifactId ?? undefined);
+    onExecute(params, useManual ? undefined : (artifactId ?? undefined));
   };
 
   return (
@@ -54,8 +63,9 @@ export function ConfigForm({ skillVariant, inputArtifacts, onExecute, isRunning 
             <ArtifactPicker
               artifacts={inputArtifacts}
               selectedId={artifactId}
-              onSelect={setArtifactId}
+              onSelect={(id) => { setArtifactId(id); setUseManual(false); }}
               onManualFilename={setManualFilename}
+              onManualMode={() => setUseManual(true)}
             />
           ) : (
             <input
