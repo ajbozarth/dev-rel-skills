@@ -63,8 +63,9 @@ The input file from a previous stage is at: {filename}
 
     if context_artifacts:
         prompt += "\n=== CONTEXT FROM PRIOR STAGES ===\n"
-        prompt += "The following outputs from earlier pipeline stages are provided as background context.\n"
-        prompt += "Use this information to inform your work — it contains research, analysis, and drafts from prior steps.\n\n"
+        prompt += "IMPORTANT: The following outputs from earlier pipeline stages contain research and data that has already been gathered.\n"
+        prompt += "Use this context as your PRIMARY source of information. Do NOT re-fetch or re-lookup data that is already provided here.\n"
+        prompt += "For example, if prior stages include PR details, commit info, or project research, use that directly instead of calling `gh` or other tools to look it up again.\n\n"
         for art in context_artifacts:
             stage_label = art["stage"].replace("_", " ").title()
             prompt += f"--- {stage_label}: {art['filename']} ---\n"

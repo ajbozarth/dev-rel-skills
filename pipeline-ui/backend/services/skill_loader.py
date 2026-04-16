@@ -225,11 +225,11 @@ STAGE_SKILL_MAP: list[dict] = [
                 "output_type": "file",
                 "params": [
                     ParamDef(
-                        name="topic",
-                        label="Topic, file path, or PR number",
-                        type="string",
+                        name="file",
+                        label="Input file",
+                        type="artifact",
                         required=True,
-                        description="Can be a file from a previous stage",
+                        description="Blog post or content to promote",
                     ),
                 ],
             },

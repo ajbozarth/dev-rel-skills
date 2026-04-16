@@ -27,7 +27,7 @@ export function ConfigForm({ skillVariant, inputArtifacts, onExecute, isRunning,
     inputArtifacts.length > 0 ? inputArtifacts[inputArtifacts.length - 1].id : null,
   );
   const [manualFilename, setManualFilename] = useState<string>('');
-  const [useManual, setUseManual] = useState(false);
+  const [useManual, setUseManual] = useState(inputArtifacts.length === 0);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
