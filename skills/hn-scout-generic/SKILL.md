@@ -21,12 +21,15 @@ runtime, so it works for any repo.
 ## Usage
 
 ```
-/hn-scout-generic [--repo owner/repo] [--top N]
+/hn-scout-generic [--repo owner/repo] [--top N] [--days N]
 ```
 
 Defaults:
 - `--repo` = auto-detected from the current working directory's git remote
-- `--top 30` (number of HN front page items to scan)
+- `--top 30` (number of stories to scan)
+- `--days` (optional) — look back N days instead of using the live front page.
+  When set, uses the Algolia HN Search API to find the top-scoring stories
+  from the past N days, sorted by popularity.
 
 ---
 
@@ -101,10 +104,40 @@ future runs.
 
 Keep this profile in memory for all subsequent scoring.
 
-### 2. Fetch the Hacker News front page
+### 2. Fetch Hacker News stories
 
-Use the Hacker News API to get the current top story IDs, then fetch
-details for each:
+Choose the data source based on whether `--days` was provided.
+
+#### Option A: `--days` is provided — use Algolia Search API
+
+Compute a Unix timestamp for N days ago and query the Algolia search endpoint,
+which returns results sorted by popularity:
+
+```bash
+# Compute timestamp for N days ago
+SINCE=$(python3 -c "import time; print(int(time.time()) - DAYS * 86400)")
+
+# Fetch top stories from the past N days, sorted by popularity
+curl -s "https://hn.algolia.com/api/v1/search?tags=story&numericFilters=created_at_i>$SINCE&hitsPerPage=TOP_N"
+```
+
+Map the Algolia response fields to the standard shape used in all downstream
+steps:
+
+| Algolia field | Maps to |
+|---------------|---------|
+| `objectID` | `id` |
+| `title` | `title` |
+| `url` | `url` |
+| `points` | `score` |
+| `num_comments` | `descendants` |
+| `author` | `by` |
+| `created_at_i` | `time` |
+
+#### Option B: `--days` is NOT provided — use the live front page (default)
+
+Use the Firebase API to get the current top story IDs, then fetch details
+for each:
 
 ```bash
 # Get top story IDs (returns up to 500, we take the first N)
@@ -232,7 +265,7 @@ directory.
 > Project: <name> (OWNER/REPO)
 > Profile source: <`.claude/hn-scout-profile.md` | README inference>
 > Rubric: <hand-tuned (from profile) | generic>
-> Scanned top {N} Hacker News stories. Found {X} AI-relevant posts.
+> Scanned top {N} Hacker News stories{" from the past {D} days (via Algolia)" if --days was used, otherwise " from the live front page"}. Found {X} AI-relevant posts.
 > Generated {Y} demo opportunities.
 
 ## Capabilities profile used for fit-scoring

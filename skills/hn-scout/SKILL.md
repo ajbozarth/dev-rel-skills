@@ -16,18 +16,52 @@ conversation — via a demo, blog post, integration, or Show HN.
 ## Usage
 
 ```
-/hn-scout [--top N]
+/hn-scout [--top N] [--days N]
 ```
 
-Defaults: `--top 30` (number of HN front page items to scan).
+Defaults:
+- `--top 30` (number of stories to scan)
+- `--days` (optional) — look back N days instead of using the live front page.
+  When set, uses the Algolia HN Search API to find the top-scoring stories
+  from the past N days, sorted by popularity.
 
 ---
 
 ## Steps
 
-### 1. Fetch the Hacker News front page
+### 1. Fetch Hacker News stories
 
-Use the Hacker News API to get the current top story IDs, then fetch details
+Choose the data source based on whether `--days` was provided.
+
+#### Option A: `--days` is provided — use Algolia Search API
+
+Compute a Unix timestamp for N days ago and query the Algolia search endpoint,
+which returns results sorted by popularity:
+
+```bash
+# Compute timestamp for N days ago
+SINCE=$(python3 -c "import time; print(int(time.time()) - DAYS * 86400)")
+
+# Fetch top stories from the past N days, sorted by popularity
+curl -s "https://hn.algolia.com/api/v1/search?tags=story&numericFilters=created_at_i>$SINCE&hitsPerPage=TOP_N"
+```
+
+Map the Algolia response fields to the standard shape used in all downstream
+steps:
+
+| Algolia field | Maps to |
+|---------------|---------|
+| `objectID` | `id` |
+| `title` | `title` |
+| `url` | `url` |
+| `points` | `score` |
+| `num_comments` | `descendants` |
+| `author` | `by` |
+| `created_at_i` | `time` |
+
+#### Option B: `--days` is NOT provided — use the live front page (default)
+
+Use the Firebase API to get the current top story IDs, then fetch details
 for each:
 
 ```bash
@@ -143,7 +177,7 @@ Write a markdown file `hn-scout-YYYY-MM-DD.md` in the current working directory.
 ```markdown
 # HN Scout Report — YYYY-MM-DD
 
-> Scanned top {N} Hacker News stories. Found {X} AI-relevant posts.
+> Scanned top {N} Hacker News stories{" from the past {D} days (via Algolia)" if --days was used, otherwise " from the live front page"}. Found {X} AI-relevant posts.
 > Generated {Y} demo opportunities.
 
 ---
