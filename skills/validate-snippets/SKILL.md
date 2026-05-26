@@ -76,7 +76,9 @@ skip it with a note: "no language tag" or "unsupported language: <tag>".
 If the block content contains placeholder markers that indicate it's an
 incomplete fragment, skip it with reason "partial snippet". Markers to detect:
 
-- Lines consisting of only `...` or `# ...` or `// ...`
+- Lines consisting of only `...` or `# ...` or `// ...` (check line by line
+  after stripping whitespace — do NOT match `...` appearing inside a string
+  literal such as `text="Long article..."`)
 - The literal string `<your-` or `YOUR_` (template placeholders)
 - The literal string `[...]`
 
@@ -87,11 +89,35 @@ incomplete fragment, skip it with reason "partial snippet". Markers to detect:
 Before executing anything, check which runner binaries are available on PATH:
 
 ```bash
-which python3 && which go && which node && which npx && which bash
+which uv && which go && which node && which npx && which bash
 ```
 
-If a runner is missing, mark all snippets of that language as SKIP with
-reason "runner not found: <binary>". Do not fail the whole skill.
+**Python specifically:** always use a clean `uv` virtualenv — never the
+global or system Python. If `uv` is not found, mark all Python snippets as
+SKIP with reason "runner not found: uv".
+
+If any Python snippets are present and `uv` is available, create a
+throw-away venv now (derive `<slug>` from the input filename):
+
+```bash
+uv venv /tmp/snippet-env-<slug> --python 3.11 --quiet
+```
+
+Use `/tmp/snippet-env-<slug>/bin/python` as the Python runner for every
+snippet in this file. Install any required packages into this venv with:
+
+```bash
+uv pip install --python /tmp/snippet-env-<slug>/bin/python <package>
+```
+
+After all snippets have run, delete the venv:
+
+```bash
+rm -rf /tmp/snippet-env-<slug>
+```
+
+For other runners (Go, Node, shell), mark as SKIP with reason
+"runner not found: <binary>" if the binary is missing.
 
 ---
 
@@ -113,6 +139,8 @@ For each runnable snippet:
    Use your judgment about what imports to add based on the snippet content.
 
 2. Run the appropriate command. Use a **30-second timeout** per snippet.
+   For Python, use `/tmp/snippet-env-<slug>/bin/python <tmp>.py` (the venv
+   created in Step 3), not the system `python3`.
    Capture:
    - Exit code
    - stdout (first 20 lines)
@@ -123,11 +151,20 @@ For each runnable snippet:
    - Non-zero exit code → **FAIL**
    - Timeout → **FAIL** (reason: "timed out after 30s")
 
-4. Clean up the temporary file.
+4. Clean up the temporary file (but not the venv — that's cleaned up after
+   all snippets have run, per Step 3).
 
 **Important:** Run snippets one at a time, sequentially. Do not run them in
 parallel — a snippet may depend on side effects or assume exclusive access to
 a port or file.
+
+**Minimize Bash invocations.** Each separate Bash call requires its own
+permission approval. Rather than invoking Python once per snippet, batch all
+Python snippets into a single Bash call — for example, a shell loop or a
+single Python driver script that runs each snippet file in sequence. One
+approval then covers the full execution, regardless of snippet count. Apply
+the same principle for other languages when multiple snippets of the same
+type are present.
 
 ---
 
